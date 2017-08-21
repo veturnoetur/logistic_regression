@@ -1,0 +1,75 @@
+---
+title: "Logistic regression assignment"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+
+##   read in the data of interest and return labels
+
+NH11Ex <- readRDS("F:/_data science references/_assignments/logistic_regression/dataSets/NatHealth2011.rds")
+labs <- attributes(NH11Ex)$labels
+
+##   1. Use glm to conduct a logistic regression to predict ever worked (everwrk) using age (age_p) and marital status (r_maritl).
+
+# examine the data of interest
+
+str(NH11Ex$everwrk) # check stucture of everwrk: factor
+levels(NH11Ex$everwrk) # check levels of everwrk: 5 levels
+
+str(NH11Ex$age_p) # check stucture of age_p: numeric
+
+str(NH11Ex$r_maritl) # check stucture of r_maritl: factor
+levels(NH11Ex$r_maritl) # check levels of r_maritl: 10 levels
+
+
+# collapse all missing values to NA
+
+NH11Ex$everwrk <- factor(NH11Ex$everwrk, levels = c("2 No", "1 Yes"))
+
+
+# run regression model
+
+everwrk.out <- glm(everwrk ~ age_p + r_maritl, data = NH11Ex, family = "binomial")
+
+coef(summary(everwrk.out))
+
+
+```
+
+```{r}
+
+##   2. Predict the probability of working for each level of marital status.
+
+# transform regression coefficients to facilitate further interpretation
+
+everwrk.out.tab <- coef(summary(everwrk.out))
+everwrk.out.tab[, "Estimate"] <- exp(coef(everwrk.out))
+everwrk.out.tab
+
+```
+
+```{r}
+
+# generate predicted values 
+
+# create a dataset with specified predictors set
+
+predDat_everwrk <- with(NH11Ex, expand.grid(r_maritl, age_p))
+
+names(predDat_everwrk)[2]<-paste("age_p")
+
+View(predDat_everwrk)
+                        
+# predict whether a person has ever worked based on the defined levels
+
+cbind(predDat_everwrk, predict(everwrk.out, type = "response",
+                       se.fit = TRUE, interval = "confidence",
+                       newdata = predDat_everwrk))
+
+```
+
